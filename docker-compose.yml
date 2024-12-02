@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  springboot-app:
+    image: itzmazeen/devops:${BUILD_NUMBER}  # Set the image name dynamically
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: foyer
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  angular-app:
+    image: itzmazeen/angular-devops-project:12
+    restart: always
+    ports:
+      - "4200:80"
+    depends_on:
+      - springboot-app
+
+  sonarqube:
+    image: sonarqube:8.9.7-community
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9092:9092"
+    volumes:
+      - SonarQube_data:/opt/sonarqube/data
+      - SonarQube_extensions:/opt/sonarqube/extensions
+      - SonarQube_logs:/opt/sonarqube/logs
+
+  nexus:
+    image: sonatype/nexus3
+    restart: always
+    ports:
+      - "8085:8081"
+    volumes:
+      - nexus_data:/nexus-data
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  mysql_data:
+  SonarQube_data:
+  SonarQube_extensions:
+  SonarQube_logs:
+  nexus_data:
+  prometheus_data:
+  grafana_data:

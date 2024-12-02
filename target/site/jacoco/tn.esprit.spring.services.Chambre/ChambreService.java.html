@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChambreService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Foyer</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.spring.services.chambre</a> &gt; <span class="el_source">ChambreService.java</span></div><h1>ChambreService.java</h1><pre class="source lang-java linenums">package tn.esprit.spring.services.chambre;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import tn.esprit.spring.dao.entities.Bloc;
+import tn.esprit.spring.dao.entities.Chambre;
+import tn.esprit.spring.dao.entities.Reservation;
+import tn.esprit.spring.dao.entities.TypeChambre;
+import tn.esprit.spring.dao.repositories.BlocRepository;
+import tn.esprit.spring.dao.repositories.ChambreRepository;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L19">@AllArgsConstructor</span>
+<span class="fc" id="L20">@Slf4j</span>
+public class ChambreService implements IChambreService {
+    ChambreRepository repo;
+    BlocRepository blocRepository;
+
+    @Override
+    public Chambre addOrUpdate(Chambre c) {
+<span class="nc" id="L27">        return repo.save(c);</span>
+    }
+
+    @Override
+    public List&lt;Chambre&gt; findAll() {
+<span class="nc" id="L32">        return repo.findAll();</span>
+    }
+
+    @Override
+    public Chambre findById(long id) {
+<span class="nc" id="L37">        Optional&lt;Chambre&gt; chambre = repo.findById(id);</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        return chambre.isPresent() ? chambre.get() : null;</span>
+    }
+
+
+    @Override
+    public void deleteById(long id) {
+<span class="nc" id="L44">        repo.deleteById(id);</span>
+<span class="nc" id="L45">    }</span>
+
+    @Override
+    public void delete(Chambre c) {
+<span class="nc" id="L49">        repo.delete(c);</span>
+<span class="nc" id="L50">    }</span>
+
+    @Override
+    public List&lt;Chambre&gt; getChambresParNomBloc(String nomBloc) {
+<span class="nc" id="L54">        return repo.findByBlocNomBloc(nomBloc);</span>
+    }
+
+    @Override
+    public long nbChambreParTypeEtBloc(TypeChambre type, long idBloc) {
+<span class="nc" id="L59">        return repo.countByTypeCAndBlocIdBloc(type, idBloc);</span>
+    }
+
+    @Override
+    public List&lt;Chambre&gt; getChambresNonReserveParNomFoyerEtTypeChambre(String nomFoyer, TypeChambre type) {
+<span class="nc" id="L64">        LocalDate[] academicYearRange = getAcademicYearRange();</span>
+<span class="nc" id="L65">        LocalDate dateDebutAU = academicYearRange[0];</span>
+<span class="nc" id="L66">        LocalDate dateFinAU = academicYearRange[1];</span>
+
+<span class="nc" id="L68">        List&lt;Chambre&gt; listChambreDispo = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        for (Chambre chambre : repo.findAll()) {</span>
+<span class="nc bnc" id="L70" title="All 4 branches missed.">            if (isEligibleChambre(chambre, nomFoyer, type) &amp;&amp; isChambreAvailable(chambre, type, dateDebutAU, dateFinAU)) {</span>
+<span class="nc" id="L71">                listChambreDispo.add(chambre);</span>
+            }
+<span class="nc" id="L73">        }</span>
+<span class="nc" id="L74">        return listChambreDispo;</span>
+    }
+
+    private LocalDate[] getAcademicYearRange() {
+        LocalDate dateDebutAU;
+        LocalDate dateFinAU;
+<span class="nc" id="L80">        int year = LocalDate.now().getYear() % 100;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        if (LocalDate.now().getMonthValue() &lt;= 7) {</span>
+<span class="nc" id="L82">            dateDebutAU = LocalDate.of(Integer.parseInt(&quot;20&quot; + (year - 1)), 9, 15);</span>
+<span class="nc" id="L83">            dateFinAU = LocalDate.of(Integer.parseInt(&quot;20&quot; + year), 6, 30);</span>
+        } else {
+<span class="nc" id="L85">            dateDebutAU = LocalDate.of(Integer.parseInt(&quot;20&quot; + year), 9, 15);</span>
+<span class="nc" id="L86">            dateFinAU = LocalDate.of(Integer.parseInt(&quot;20&quot; + (year + 1)), 6, 30);</span>
+        }
+<span class="nc" id="L88">        return new LocalDate[]{dateDebutAU, dateFinAU};</span>
+    }
+
+    private boolean isEligibleChambre(Chambre chambre, String nomFoyer, TypeChambre type) {
+<span class="nc bnc" id="L92" title="All 4 branches missed.">        return chambre.getTypeC().equals(type) &amp;&amp; chambre.getBloc().getFoyer().getNomFoyer().equals(nomFoyer);</span>
+    }
+
+    private boolean isChambreAvailable(Chambre chambre, TypeChambre type, LocalDate dateDebutAU, LocalDate dateFinAU) {
+<span class="nc" id="L96">        int numReservation = (int) chambre.getReservations().stream()</span>
+<span class="nc" id="L97">                .filter(reservation -&gt; isWithinAcademicYear(reservation, dateDebutAU, dateFinAU))</span>
+<span class="nc" id="L98">                .count();</span>
+
+<span class="nc bnc" id="L100" title="All 4 branches missed.">        return switch (type) {</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            case SIMPLE -&gt; numReservation == 0;</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            case DOUBLE -&gt; numReservation &lt; 2;</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            case TRIPLE -&gt; numReservation &lt; 3;</span>
+        };
+    }
+
+    private boolean isWithinAcademicYear(Reservation reservation, LocalDate dateDebutAU, LocalDate dateFinAU) {
+<span class="nc bnc" id="L108" title="All 4 branches missed.">        return reservation.getAnneeUniversitaire().isBefore(dateFinAU) &amp;&amp; reservation.getAnneeUniversitaire().isAfter(dateDebutAU);</span>
+    }
+
+
+    @Override
+    public void listeChambresParBloc() {
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        for (Bloc b : blocRepository.findAll()) {</span>
+<span class="nc" id="L115">            log.info(&quot;Bloc =&gt; &quot; + b.getNomBloc() + &quot; ayant une capacité &quot; + b.getCapaciteBloc());</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">            if (!b.getChambres().isEmpty()) { // Use isEmpty() for readability</span>
+<span class="nc" id="L118">                log.info(&quot;La liste des chambres pour ce bloc: &quot;);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                for (Chambre c : b.getChambres()) {</span>
+<span class="nc" id="L120">                    log.info(&quot;NumChambre: &quot; + c.getNumeroChambre() + &quot; type: &quot; + c.getTypeC());</span>
+<span class="nc" id="L121">                }</span>
+            } else {
+<span class="nc" id="L123">                log.info(&quot;Pas de chambre disponible dans ce bloc&quot;);</span>
+            }
+
+<span class="nc" id="L126">            log.info(&quot;********************&quot;);</span>
+<span class="nc" id="L127">        }</span>
+<span class="nc" id="L128">    }</span>
+
+
+    @Override
+    public void pourcentageChambreParTypeChambre() {
+<span class="nc" id="L133">        long totalChambre = repo.count();</span>
+<span class="nc" id="L134">        double pSimple = ((double) repo.countChambreByTypeC(TypeChambre.SIMPLE) * 100) / totalChambre;</span>
+<span class="nc" id="L135">        double pDouble = ((double) repo.countChambreByTypeC(TypeChambre.DOUBLE) * 100) / totalChambre;</span>
+<span class="nc" id="L136">        double pTriple = ((double) repo.countChambreByTypeC(TypeChambre.TRIPLE) * 100) / totalChambre;</span>
+
+<span class="nc" id="L138">        log.info(&quot;Nombre total des chambre: &quot; + totalChambre);</span>
+<span class="nc" id="L139">        log.info(&quot;Le pourcentage des chambres pour le type SIMPLE est égale à &quot; + pSimple);</span>
+<span class="nc" id="L140">        log.info(&quot;Le pourcentage des chambres pour le type DOUBLE est égale à &quot; + pDouble);</span>
+<span class="nc" id="L141">        log.info(&quot;Le pourcentage des chambres pour le type TRIPLE est égale à &quot; + pTriple);</span>
+
+<span class="nc" id="L143">    }</span>
+
+    @Override
+    public void nbPlacesDisponibleParChambreAnneeEnCours() {
+<span class="nc" id="L147">        LocalDate[] academicYearRange = getAcademicYearRange();</span>
+<span class="nc" id="L148">        LocalDate dateDebutAU = academicYearRange[0];</span>
+<span class="nc" id="L149">        LocalDate dateFinAU = academicYearRange[1];</span>
+
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        for (Chambre chambre : repo.findAll()) {</span>
+<span class="nc" id="L152">            long nbReservation = repo.countReservationsByIdChambreAndReservationsEstValideAndReservationsAnneeUniversitaireBetween(</span>
+<span class="nc" id="L153">                    chambre.getIdChambre(), true, dateDebutAU, dateFinAU);</span>
+
+<span class="nc" id="L155">            logAvailablePlaces(chambre, nbReservation);</span>
+<span class="nc" id="L156">        }</span>
+<span class="nc" id="L157">    }</span>
+
+
+
+    private void logAvailablePlaces(Chambre chambre, long nbReservation) {
+<span class="nc" id="L162">        int maxCapacity = getMaxCapacityByType(chambre.getTypeC());</span>
+<span class="nc" id="L163">        int availablePlaces = maxCapacity - (int) nbReservation;</span>
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (availablePlaces &gt; 0) {</span>
+<span class="nc" id="L166">            log.info(&quot;Le nombre de place disponible pour la chambre &quot; + chambre.getTypeC() + &quot; &quot; + chambre.getNumeroChambre() + &quot; est &quot; + availablePlaces);</span>
+        } else {
+<span class="nc" id="L168">            log.info(&quot;La chambre &quot; + chambre.getTypeC() + &quot; &quot; + chambre.getNumeroChambre() + &quot; est complete&quot;);</span>
+        }
+<span class="nc" id="L170">    }</span>
+
+    private int getMaxCapacityByType(TypeChambre type) {
+<span class="nc bnc" id="L173" title="All 4 branches missed.">        return switch (type) {</span>
+<span class="nc" id="L174">            case SIMPLE -&gt; 1;</span>
+<span class="nc" id="L175">            case DOUBLE -&gt; 2;</span>
+<span class="nc" id="L176">            case TRIPLE -&gt; 3;</span>
+        };
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

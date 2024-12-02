@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: jenkins
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ['192.168.56.18:8080']
+
+  - job_name: spring
+    metrics_path: /Foyer/actuator/prometheus
+    static_configs:
+      - targets: ['192.168.56.18:8081']
+
+  - job_name: node_exporter
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['192.168.56.18:9100']
